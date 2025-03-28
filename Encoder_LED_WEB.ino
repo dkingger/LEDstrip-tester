@@ -1,8 +1,9 @@
-// ESP32-C3 Mini Dev Board - LED-effekter med rotary encoder, ringtryk og webinterface
+// ESP32-C3 Mini Dev Board - LED-effekter med rotary encoder, ringtryk og WebSocket webinterface
 
 #include <Adafruit_NeoPixel.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <WebSocketsServer.h>
 
 #define ENCODER_A 20
 #define ENCODER_B 21
@@ -11,10 +12,11 @@
 #define LED_STRIP_PIN 6
 #define LED_COUNT 10
 
-const char* ssid = "ESP32-LED"; // ikke brugt i AP mode
-const char* password = "led12345"; // ikke brugt i AP mode
+const char* ssid = "ESP32-LED";
+const char* password = "led12345";
 
 WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -142,12 +144,29 @@ void updateEffect() {
 }
 
 void handleRoot() {
-  String html = "<html><head><meta http-equiv='refresh' content='2'/><style>body{font-family:sans-serif;}</style></head><body>";
-  html += "<h2>ESP32 LED Controller</h2>";
-  html += "<p><strong>Lysstyrke:</strong> " + String(brightness) + "</p>";
-  html += "<p><strong>Effekt:</strong> " + String(effectNames[effectIndex]) + "</p>";
-  html += "</body></html>";
+  String html = R"rawliteral(
+  <html><head><title>Johannes' WS2812B LED tester</title>
+  <style>body{font-family:sans-serif;} .value{font-weight:bold;}</style>
+  </head><body>
+  <h2>Johannes' WS2812B LED tester</h2>
+  <p>Lysstyrke: <span id="brightness" class="value">?</span></p>
+  <p>Effekt: <span id="effect" class="value">?</span></p>
+  <script>
+  var ws = new WebSocket("ws://" + location.hostname + ":81/");
+  ws.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+    document.getElementById("brightness").innerText = data.brightness;
+    document.getElementById("effect").innerText = data.effect;
+  };
+  </script>
+  </body></html>
+  )rawliteral";
   server.send(200, "text/html", html);
+}
+
+void notifyClients() {
+  String json = "{\"brightness\":" + String(brightness) + ",\"effect\":\"" + String(effectNames[effectIndex]) + "\"}";
+  webSocket.broadcastTXT(json);
 }
 
 void setup() {
@@ -170,13 +189,16 @@ void setup() {
 
   server.on("/", handleRoot);
   server.begin();
-  Serial.println("Webserver kører...");
+  webSocket.begin();
+  Serial.println("Webserver og WebSocket kører...");
 }
 
 void loop() {
   server.handleClient();
+  webSocket.loop();
 
   if (turned) {
+    notifyClients();
     Serial.print("Lysstyrke: ");
     Serial.println(brightness);
     turned = false;
@@ -186,6 +208,7 @@ void loop() {
     effectIndex = (effectIndex + 1) % 10;
     effectStep = 0;
     direction = 1;
+    notifyClients();
     Serial.print("Næste effekt: ");
     Serial.println(effectIndex);
     delay(200);
@@ -195,6 +218,7 @@ void loop() {
     effectIndex = (effectIndex - 1 + 10) % 10;
     effectStep = 0;
     direction = 1;
+    notifyClients();
     Serial.print("Forrige effekt: ");
     Serial.println(effectIndex);
     delay(200);
