@@ -66,7 +66,6 @@ Installér disse via **Sketch → Include Library → Manage Libraries** i Ardui
 ## 🚀 Idéer til udvidelse
 
 - Dropdown-menu til at vælge specifik effekt
-- Gemme lysstyrke og effekt i EEPROM
 - Overgang til station-mode og MQTT-integration
 - Musik-reaktiv LED-effekt (med mikrofon)
 
