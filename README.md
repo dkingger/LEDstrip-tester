@@ -1,14 +1,31 @@
-# SuperMini LED Tester 🔦✨
+# SuperMini LED Tester 💡🔧
 
-Et ESP32-C3-baseret projekt der styrer en WS2812B LED-strip via rotary encoder, fysiske knapper og et trådløst webinterface med live opdatering.
+Et ESP32-C3 Mini Dev Board projekt der styrer en WS2812B LED-strip via fysisk rotary encoder, to trykknapper og et mobilvenligt webinterface med live opdatering via WebSocket.
+
+---
+
+## 📸 Fotos
+
+### Hardwareopsætning
+![Hardware](Hardware.jpg)
+
+### Webinterface på mobil
+![Interface](Interface.PNG)
+
+### Projektets logo
+![Logo](logo.png)
+
+---
 
 ## Funktioner
-- 🎚️ Rotary encoder til justering af lysstyrke
-- 🔘 To fysiske knapper til at skifte mellem 10 forskellige lys-effekter
-- 🌐 Webinterface med WebSocket real-time kontrol
-- 💾 EEPROM-lagring af sidste effekt og lysstyrke
-- 📱 Mobilvenligt interface – fungerer også i Captive Portal-mode
-- 🖼️ SPIFFS-hostede billeder og HTML
+
+- 🔄 Rotary encoder: Justér lysstyrken (0–255)
+- 🔘 To fysiske ringtryk: Skift mellem 10 effekter
+- 🌈 LED-strip: WS2812B med 10 dioder
+- 🌐 Webinterface med live opdatering via WebSocket
+- 📁 SPIFFS: Webside og grafik hostes direkte på ESP32
+- 📶 AP-mode + Captive Portal
+- 💾 EEPROM-lagring af sidste indstilling (effekt og lysstyrke)
 
 ---
 
@@ -16,51 +33,49 @@ Et ESP32-C3-baseret projekt der styrer en WS2812B LED-strip via rotary encoder, 
 
 | Filnavn                      | Beskrivelse |
 |-----------------------------|-------------|
-| `Encode_LED.ino`            | Basal version med fysiske knapper og encoder – uden webinterface |
-| `Encode_LED_Web.ino`        | Version med simpelt webinterface (ingen live opdatering) |
-| `Encode_LED_WebSocket.ino`  | Tilføjer WebSocket så webinterfacet opdateres live |
-| `Encode_LED_WebSocket_SPIFFS.ino` | Fuldt webinterface via SPIFFS – nu mobilvenlig og med logo, pile og Captive Portal |
+| `Encode_LED.ino`            | Fysisk styring via knapper og encoder – uden WiFi/web |
+| `Encode_LED_Web.ino`        | Simpelt webinterface uden live opdatering |
+| `Encode_LED_WebSocket.ino`  | Live WebSocket-baseret interface |
+| `Encode_LED_WebSocket_SPIFFS.ino` | Komplet version med SPIFFS og mobilvenligt design |
 
 ---
 
-## 📚 Nødvendige biblioteker
+## 📚 Krævede biblioteker
 
-Disse biblioteker installeres automatisk via PlatformIO, eller manuelt i Arduino IDE:
+Installeres automatisk via PlatformIO eller manuelt i Arduino IDE:
 
 - [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
 - [ArduinoJson](https://arduinojson.org/)
-- [WebSockets by Links2004](https://github.com/Links2004/arduinoWebSockets)
-- WiFi, EEPROM, SPIFFS (indbygget i ESP32 Arduino core)
+- [WebSockets (Links2004)](https://github.com/Links2004/arduinoWebSockets)
+- SPIFFS, EEPROM og WiFi (indbygget i ESP32 Arduino core)
 
 ---
 
-## 🧰 Hardware
+## 🔩 Hardware
 
 - ESP32-C3 Mini Dev Board
-- 2x momentary trykknapper
-- 1x Rotary encoder (uden indbygget LED)
-- WS2812B LED-strip (10 LED'er)
+- 2x ringtryk (momentary)
+- 1x rotary encoder (uden RGB-lys)
+- 10x WS2812B RGB LED (LED-strip)
+- Modstand og modstrømsbeskyttelse anbefales
 
 ---
 
-## 🕒 Sidst ændret
+## 🕓 Sidst ændret
 
-**29. marts 2025** – implementeret stabil rotary encoder, fixet WebSocket-synkronisering og flyttet EEPROM-lagring ud af interrupt.
+**29. marts 2025**  
+- Debounce på rotary encoder
+- EEPROM flyttet ud af interrupt
+- Forbedret WebSocket-opdatering og Captive Portal
 
 ---
 
-## 🧪 Testet med
+## 🧪 Udviklet og testet med
 
-- PlatformIO på Visual Studio Code
-- Arduino IDE 2 (uden SPIFFS upload plugin)
+- PlatformIO (VS Code)
+- Arduino IDE 2.3 (begrænset SPIFFS-understøttelse)
 - Chrome & Safari på mobil og desktop
 
 ---
 
-## 📸 Interface
-
-<img src="logo.png" width="100%">
-
----
-
-Du er velkommen til at foreslå ændringer eller lave en fork af projektet!
+> 💬 Kontakt: Johannes • Projektstatus: ✅ Fuldt fungerende og udbygget
