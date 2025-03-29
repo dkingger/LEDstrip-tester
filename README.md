@@ -1,19 +1,8 @@
+![Logo](logo.png)
+
 # SuperMini LED Tester 💡🔧
 
 Et ESP32-C3 Mini Dev Board projekt der styrer en WS2812B LED-strip via fysisk rotary encoder, to trykknapper og et mobilvenligt webinterface med live opdatering via WebSocket.
-
----
-
-## 📸 Fotos
-
-### Hardwareopsætning
-![Hardware](Hardware.jpg)
-
-### Webinterface på mobil
-![Interface](Interface.PNG)
-
-### Projektets logo
-![Logo](logo.png)
 
 ---
 
@@ -75,6 +64,16 @@ Installeres automatisk via PlatformIO eller manuelt i Arduino IDE:
 - PlatformIO (VS Code)
 - Arduino IDE 2.3 (begrænset SPIFFS-understøttelse)
 - Chrome & Safari på mobil og desktop
+
+---
+
+## 📸 Fotos
+
+### Hardwareopsætning
+![Hardware](Hardware.jpg)
+
+### Webinterface på mobil
+![Interface](Interface.PNG)
 
 ---
 
