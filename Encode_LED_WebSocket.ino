@@ -1,10 +1,11 @@
-// ESP32-C3 Mini Dev Board - LED-effekter med rotary encoder, ringtryk og WebSocket webinterface
+// ESP32-C3 Mini Dev Board - LED-effekter med rotary encoder, ringtryk, WebSocket webinterface og EEPROM lagring
 
 #include <Adafruit_NeoPixel.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 
 #define ENCODER_A 20
 #define ENCODER_B 21
@@ -12,6 +13,7 @@
 #define RING2 2
 #define LED_STRIP_PIN 6
 #define LED_COUNT 10
+#define EEPROM_SIZE 12
 
 const char* ssid = "ESP32-LED";
 const char* password = "led12345";
@@ -28,11 +30,31 @@ int effectIndex = 0;
 unsigned long lastEffectUpdate = 0;
 int effectStep = 0;
 int direction = 1;
+unsigned long lastChangeTime = 0;
 
 const char* effectNames[10] = {
   "Rød", "Grøn", "Blå", "Løbelys Gul", "Knight Rider Rød",
   "Blink Hvid", "Regnbue", "Løbelys Magenta", "Knight Rider Regnbue", "Orange"
 };
+
+void saveToEEPROM() {
+  lastChangeTime = millis();
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, effectIndex);
+  EEPROM.put(2, lastChangeTime);
+  EEPROM.commit();
+  EEPROM.write(0, brightness);
+  EEPROM.write(1, effectIndex);
+  EEPROM.commit();
+}
+
+void loadFromEEPROM() {
+  EEPROM.get(2, lastChangeTime);
+  brightness = EEPROM.read(0);
+  effectIndex = EEPROM.read(1);
+  brightness = constrain(brightness, 0, 255);
+  effectIndex = constrain(effectIndex, 0, 9);
+}
 
 void IRAM_ATTR handleEncoder() {
   int clkState = digitalRead(ENCODER_A);
@@ -46,6 +68,7 @@ void IRAM_ATTR handleEncoder() {
       if (brightness < 0) brightness = 0;
     }
     turned = true;
+    saveToEEPROM();
   }
   lastClkState = clkState;
 }
@@ -147,14 +170,47 @@ void updateEffect() {
 void handleRoot() {
   String html = R"rawliteral(
   <html><head><title>Johannes' WS2812B LED tester</title>
-  <style>body{font-family:sans-serif;} .value{font-weight:bold;} button, input[type=range]{margin: 10px 0; display: block;}</style>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    .value { font-weight: bold; font-size: 1.5rem; }
+    input[type=range] {
+      width: 100%;
+      height: 60px;
+      -webkit-appearance: none;
+      background: #ddd;
+      border-radius: 10px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 60px;
+      width: 30px;
+      background: #333;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button {
+      font-size: 1.4rem;
+      padding: 30px 25px;
+      margin: 10px 0;
+      width: 100%;
+      height: 100px;
+    }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
   </head><body>
   <h2>Johannes' WS2812B LED tester</h2>
   <p>Lysstyrke: <span id="brightness" class="value">?</span></p>
   <input type="range" id="slider" min="0" max="255" value="100">
   <p>Effekt: <span id="effect" class="value">?</span></p>
-  <button onclick="send('prev')">Forrige effekt</button>
-  <button onclick="send('next')">Næste effekt</button>
+  <div style="display: flex; gap: 1rem; justify-content: center; align-items: center;">
+  <button style="flex:1" onclick="send('prev')">&#8592; FORRIGE</button>
+  <button style="flex:1" onclick="send('next')">NÆSTE &#8594;</button>
+</div>
   <script>
   var ws = new WebSocket("ws://" + location.hostname + ":81/");
   ws.onmessage = function(event) {
@@ -170,7 +226,7 @@ void handleRoot() {
     ws.send(JSON.stringify({type: 'effect', value: cmd}));
   }
   </script>
-  </body></html>
+  <footer>Sidst opdateret: 2025-03-29</footer>
   )rawliteral";
   server.send(200, "text/html", html);
 }
@@ -182,6 +238,9 @@ void notifyClients() {
 
 void setup() {
   Serial.begin(9600);
+  EEPROM.begin(EEPROM_SIZE);
+  loadFromEEPROM();
+
   pinMode(ENCODER_A, INPUT_PULLUP);
   pinMode(ENCODER_B, INPUT_PULLUP);
   pinMode(RING1, INPUT_PULLUP);
@@ -210,6 +269,7 @@ void setup() {
       if (!err) {
         if (doc["type"] == "brightness") {
           brightness = constrain(doc["value"], 0, 255);
+          saveToEEPROM();
           notifyClients();
         } else if (doc["type"] == "effect") {
           String cmd = doc["value"];
@@ -217,6 +277,7 @@ void setup() {
           if (cmd == "prev") effectIndex = (effectIndex - 1 + 10) % 10;
           effectStep = 0;
           direction = 1;
+          saveToEEPROM();
           notifyClients();
         }
       }
@@ -224,6 +285,8 @@ void setup() {
   });
 
   Serial.println("Webserver og WebSocket kører...");
+  Serial.print("Sidste ændringstidspunkt (ms siden start): ");
+  Serial.println(lastChangeTime);
 }
 
 void loop() {
@@ -241,6 +304,7 @@ void loop() {
     effectIndex = (effectIndex + 1) % 10;
     effectStep = 0;
     direction = 1;
+    saveToEEPROM();
     notifyClients();
     Serial.print("Næste effekt: ");
     Serial.println(effectIndex);
@@ -251,6 +315,7 @@ void loop() {
     effectIndex = (effectIndex - 1 + 10) % 10;
     effectStep = 0;
     direction = 1;
+    saveToEEPROM();
     notifyClients();
     Serial.print("Forrige effekt: ");
     Serial.println(effectIndex);
