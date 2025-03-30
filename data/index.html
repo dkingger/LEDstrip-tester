@@ -6,13 +6,14 @@
   <style>
     body {
       font-family: sans-serif;
+      font-size: 3rem;
       padding: 1rem;
       margin: 0;
       background: #aaeeffff;
     }
     .value {
       font-weight: bold;
-      font-size: 1.5rem;
+      font-size: 3rem;
     }
     input[type=range] {
       width: 100%;
@@ -32,7 +33,7 @@
     }
     footer {
       margin-top: 2rem;
-      font-size: 0.9rem;
+      font-size: 1.5rem;
       color: #777;
     }
     .button-row {
@@ -57,7 +58,7 @@
   <input type="range" id="slider" min="0" max="255" value="100">
   
   <p>Effekt: <span id="effect" class="value">?</span></p>
-  <div style="display: flex; flex-direction: column; gap: 1rem;">
+  <div style="display: flex; align-items: center; gap: 1rem;">
     <img src="/forrig.png" style="width: 45%; height: auto;" onclick="send('prev')">
     <img src="/naeste.png" style="width: 45%; height: auto;" onclick="send('next')">
   </div>
