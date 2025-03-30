@@ -86,10 +86,11 @@ Der finder du:
 ---
 
 ### Webinterface
-![Webinterface](Interface.PNG)
+<img src="Interface.PNG" alt="Webinterface" width="300"/>
+
 
 ### Hardwareopstilling
-![Hardware](Hardware.jpg)
+<img src="Hardware.jpg" alt="Hardware" width="300"/>
 
 ---
 
