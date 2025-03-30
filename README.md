@@ -1,5 +1,5 @@
 <div style="display: flex; align-items: center; gap: 1rem;">
-  <img src="logo.png" alt="SuperMini Logo" width="300"/>
+  <img src="grafik/logo.png" alt="SuperMini Logo" width="300"/>
   <img src="grafik/icon.png" alt="SuperMini Icon" width="200"/>
 </div>
 # SuperMini LED Tester - SPIFFS & WebSocket version
