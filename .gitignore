@@ -16,3 +16,8 @@
 
 # Arduino backup
 *~.tmp
+
+# Helper files
+DEV_GUIDE.md
+platformio.yml
+
