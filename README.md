@@ -1,3 +1,5 @@
+<img src="logo.png" alt="SuperMini Logo" width="300"/>
+
 # SuperMini LED Tester - SPIFFS & WebSocket version
 
 Dette projekt bruger et ESP32-C3 Mini Dev Board til at styre en WS2812B LED-strip med både fysiske kontakter og et webinterface. Det kombinerer rotary encoder, EEPROM-lagring, SPIFFS-hostet webside og realtidskommunikation med WebSockets.
@@ -82,6 +84,15 @@ Der finder du:
 - Fixet WebSocket-opdateringer i `loop()`
 
 ---
+
+### Webinterface
+![Webinterface](Interface.PNG)
+
+### Hardwareopstilling
+![Hardware](Hardware.jpg)
+
+---
+
 
 ## Licens
 
