@@ -24,6 +24,17 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
+// === Valg af NeoPixel-type ===
+// Standardindstilling er NEO_GRB + NEO_KHZ800 (passer til WS2812B)
+//
+// Hvis du bruger en anden type LED-strip, ændres tredje parameter ved initialisering:
+// - WS2812B/NeoPixel: NEO_GRB + NEO_KHZ800
+// - FLORA pixels (v1, ældre): NEO_RGB + NEO_KHZ800
+// - SK6812 (RGBW pixels): NEO_RGBW + NEO_KHZ800
+//
+// Eksempel:
+// Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_RGBW + NEO_KHZ800);
+
 volatile int lastClkState;
 volatile bool turned = false;
 int brightness = 100;
