@@ -31,6 +31,12 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    input[type=color] {
+      width: 100%;
+      height: 80px;
+      border: none;
+      margin-top: 2rem;
+    }
     footer {
       margin-top: 2rem;
       font-size: 1.5rem;
@@ -62,8 +68,10 @@
     <img src="/forrig.png" style="width: 45%; height: auto;" onclick="send('prev')">
     <img src="/naeste.png" style="width: 45%; height: auto;" onclick="send('next')">
   </div>
-  
-  
+
+  <!-- Farvevælger -->
+  <input type="color" id="colorpicker" value="#ffffff">
+
   <script>
     var ws = new WebSocket("ws://" + location.hostname + ":81/");
     ws.onmessage = function(event) {
@@ -75,11 +83,14 @@
     document.getElementById("slider").oninput = function() {
       ws.send(JSON.stringify({type: 'brightness', value: parseInt(this.value)}));
     };
+    document.getElementById("colorpicker").oninput = function() {
+      ws.send("COLOR:" + this.value);
+    };
     function send(cmd) {
       ws.send(JSON.stringify({type: 'effect', value: cmd}));
     }
   </script>
   
-  <footer>Sidst opdateret: 2025-03-29</footer>
+  <footer>Sidst opdateret: 2025-03-30 &nbsp; Version 1.12</footer>
 </body>
 </html>

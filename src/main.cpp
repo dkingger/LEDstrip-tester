@@ -24,17 +24,6 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
-// === Valg af NeoPixel-type ===
-// Standardindstilling er NEO_GRB + NEO_KHZ800 (passer til WS2812B)
-//
-// Hvis du bruger en anden type LED-strip, ændres tredje parameter ved initialisering:
-// - WS2812B/NeoPixel: NEO_GRB + NEO_KHZ800
-// - FLORA pixels (v1, ældre): NEO_RGB + NEO_KHZ800
-// - SK6812 (RGBW pixels): NEO_RGBW + NEO_KHZ800
-//
-// Eksempel:
-// Adafruit_NeoPixel strip(LED_COUNT, LED_STRIP_PIN, NEO_RGBW + NEO_KHZ800);
-
 volatile int lastClkState;
 volatile bool turned = false;
 int brightness = 100;
@@ -45,9 +34,13 @@ int effectStep = 0;
 int direction = 1;
 unsigned long lastChangeTime = 0;
 
-const char* effectNames[10] = {
+int customRed = 255;
+int customGreen = 255;
+int customBlue = 255;
+
+const char* effectNames[110] = {
   "Rød", "Grøn", "Blå", "Løbelys Gul", "Knight Rider Rød",
-  "Blink Hvid", "Regnbue", "Løbelys Magenta", "Knight Rider Regnbue", "Orange"
+  "Blink Hvid", "Regnbue", "Løbelys Magenta", "Knight Rider Regnbue", "Brugerdefineret"
 };
 
 void saveToEEPROM() {
@@ -56,9 +49,6 @@ void saveToEEPROM() {
   EEPROM.write(1, effectIndex);
   EEPROM.put(2, lastChangeTime);
   EEPROM.commit();
-  EEPROM.write(0, brightness);
-  EEPROM.write(1, effectIndex);
-  EEPROM.commit();
 }
 
 void loadFromEEPROM() {
@@ -66,7 +56,7 @@ void loadFromEEPROM() {
   brightness = EEPROM.read(0);
   effectIndex = EEPROM.read(1);
   brightness = constrain(brightness, 0, 255);
-  effectIndex = constrain(effectIndex, 0, 9);
+  effectIndex = constrain(effectIndex, 0, 10);
 }
 
 void IRAM_ATTR handleEncoder() {
@@ -168,8 +158,15 @@ void effectKnightRiderRainbow() {
   }
 }
 
-void updateEffect() {
+void effectColourPicker() {
   strip.setBrightness(brightness);
+  for (int i = 0; i < LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(customRed, customGreen, customBlue));
+  }
+  strip.show();
+}
+
+void updateEffect() {
   strip.setBrightness(brightness);
   switch (effectIndex) {
     case 0: effectSolidColor(strip.Color(255, 0, 0)); break;
@@ -181,7 +178,7 @@ void updateEffect() {
     case 6: effectRainbow(); break;
     case 7: effectRunningLight(strip.Color(255, 0, 255)); break;
     case 8: effectKnightRiderRainbow(); break;
-    case 9: effectSolidColor(strip.Color(255, 128, 0)); break;
+    case 9: effectColourPicker(); break;
   }
 }
 
@@ -217,17 +214,17 @@ void setup() {
   strip.show();
   clearStrip();
 
-  WiFi.softAP("ESP32-LED", "led12345");
+  WiFi.softAP(ssid, password);
   Serial.println("ESP32 kører som Access Point!");
   Serial.print("IP adresse: ");
   Serial.println(WiFi.softAPIP());
 
   server.on("/", handleRoot);
   server.begin();
-  server.on("/generate_204", handleRoot); // Android
-  server.on("/fwlink", handleRoot);        // Windows
-  server.on("/hotspot-detect.html", handleRoot); // iOS/macOS
-  server.on("/connecttest.txt", handleRoot); // Xbox
+  server.on("/generate_204", handleRoot);
+  server.on("/fwlink", handleRoot);
+  server.on("/hotspot-detect.html", handleRoot);
+  server.on("/connecttest.txt", handleRoot);
   server.on("/wpad.dat", handleRoot);
   server.serveStatic("/logo.png", SPIFFS, "/logo.png");
   server.serveStatic("/forrig.png", SPIFFS, "/forrig.png");
@@ -237,21 +234,33 @@ void setup() {
   webSocket.onEvent([](uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
     if (type == WStype_TEXT) {
       String msg = String((char*)payload);
-      DynamicJsonDocument doc(128);
-      DeserializationError err = deserializeJson(doc, msg);
-      if (!err) {
-        if (doc["type"] == "brightness") {
-          brightness = constrain(doc["value"].as<int>(), 0, 255);
-          saveToEEPROM();
-          notifyClients();
-        } else if (doc["type"] == "effect") {
-          String cmd = doc["value"];
-          if (cmd == "next") effectIndex = (effectIndex + 1) % 10;
-          if (cmd == "prev") effectIndex = (effectIndex - 1 + 10) % 10;
-          effectStep = 0;
-          direction = 1;
-          saveToEEPROM();
-          notifyClients();
+      if (msg.startsWith("COLOR:")) {
+        String hexColor = msg.substring(6);
+        int r, g, b;
+        if (sscanf(hexColor.c_str(), "#%02x%02x%02x", &r, &g, &b) == 3) {
+          customRed = r;
+          customGreen = g;
+          customBlue = b;
+          effectIndex = 10;
+          updateEffect();
+        }
+      } else {
+        DynamicJsonDocument doc(128);
+        DeserializationError err = deserializeJson(doc, msg);
+        if (!err) {
+          if (doc["type"] == "brightness") {
+            brightness = constrain(doc["value"].as<int>(), 0, 255);
+            saveToEEPROM();
+            notifyClients();
+          } else if (doc["type"] == "effect") {
+            String cmd = doc["value"];
+            if (cmd == "next") effectIndex = (effectIndex + 1) % 11;
+            if (cmd == "prev") effectIndex = (effectIndex - 1 + 11) % 11;
+            effectStep = 0;
+            direction = 1;
+            saveToEEPROM();
+            notifyClients();
+          }
         }
       }
     }
@@ -265,8 +274,6 @@ void setup() {
 void loop() {
   server.handleClient();
   webSocket.loop();
-  server.handleClient();
-  webSocket.loop();
 
   if (turned) {
     strip.setBrightness(brightness);
@@ -278,7 +285,7 @@ void loop() {
   }
 
   if (digitalRead(RING1) == LOW) {
-    effectIndex = (effectIndex + 1) % 10;
+    effectIndex = (effectIndex + 1) % 11;
     effectStep = 0;
     direction = 1;
     saveToEEPROM();
@@ -289,7 +296,7 @@ void loop() {
   }
 
   if (digitalRead(RING2) == LOW) {
-    effectIndex = (effectIndex - 1 + 10) % 10;
+    effectIndex = (effectIndex - 1 + 11) % 11;
     effectStep = 0;
     direction = 1;
     saveToEEPROM();
